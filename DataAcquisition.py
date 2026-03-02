@@ -3,7 +3,6 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from pytrends.request import TrendReq
 from datetime import datetime, timedelta
-import numpy as np
 import time
 
 
@@ -108,6 +107,7 @@ class AdvancedGameDataCollector:
 
         daily_df = df.resample("D").mean().interpolate()
 
+        # Extend to today
         if daily_df.index.max() < self.end_date:
 
             last_row = daily_df.iloc[-1]
@@ -145,7 +145,12 @@ class AdvancedGameDataCollector:
             return None
 
         df = data.reset_index()
-        df = df.rename(columns={keyword: "google_trend"})
+
+        if keyword in df.columns:
+            df = df.rename(columns={keyword: "google_trend"})
+        else:
+            return None
+
         df = df[["date", "google_trend"]]
 
         return df
@@ -171,6 +176,11 @@ class AdvancedGameDataCollector:
                 continue
 
             players_df = players_df.reset_index()
+
+            # Fix column name safely
+            if "date" not in players_df.columns:
+                players_df.rename(columns={"index": "date"}, inplace=True)
+
             players_df["date"] = pd.to_datetime(players_df["date"])
 
             players_df["players_change_pct"] = players_df["avg_players"].pct_change().fillna(0)
@@ -180,9 +190,13 @@ class AdvancedGameDataCollector:
             trends_df = self.get_google_trends(g["name"] + " game")
 
             if trends_df is not None and "date" in trends_df.columns:
+
                 trends_df["date"] = pd.to_datetime(trends_df["date"])
+
                 final_df = players_df.merge(trends_df, on="date", how="left")
+
                 final_df["google_trend"] = final_df["google_trend"].ffill().fillna(0)
+
             else:
                 final_df = players_df.copy()
                 final_df["google_trend"] = 0
@@ -207,6 +221,7 @@ class AdvancedGameDataCollector:
             return None
 
         result = pd.concat(all_data, ignore_index=True)
+
         result.to_csv(self.output_file, index=False)
 
         print("\n🔥 ADVANCED DATASET READY")
