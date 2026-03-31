@@ -12,7 +12,6 @@ class AdvancedGameDataCollector:
         self.end_date = datetime.now()
         self.output_file = output_file
         self.collection_time = datetime.now()
-    # STEAM STORE API (ALL GAMES)
     def get_steam_store_data(self):
         data_list = []
         for g in self.games:
@@ -49,7 +48,6 @@ class AdvancedGameDataCollector:
                 "is_free": is_free
             })
         return pd.DataFrame(data_list)
-    # STEAMCHARTS (ALL GAMES)
     def get_steamcharts_data(self):
         all_data = []
         for g in self.games:
@@ -96,7 +94,6 @@ class AdvancedGameDataCollector:
             df["appid"] = appid
             all_data.append(df)
         return pd.concat(all_data, ignore_index=True)
-    # GOOGLE TRENDS (ALL GAMES)
     def get_google_trends(self):
         pytrends = TrendReq(hl='en-US', tz=0)
         all_data = []
@@ -117,7 +114,6 @@ class AdvancedGameDataCollector:
             all_data.append(df)
             time.sleep(2)  # avoid blocking
         return pd.concat(all_data, ignore_index=True)
-    # FULL PIPELINE (OPTIONAL)
     def run(self):
         steam_api = self.get_steam_store_data()
         steamcharts = self.get_steamcharts_data()
